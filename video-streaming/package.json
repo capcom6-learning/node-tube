@@ -1,5 +1,5 @@
 {
-  "name": "node-tube",
+  "name": "video-streaming",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -10,7 +10,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "dependencies": {
     "express": "^4.17.1"
   },
