@@ -13,10 +13,39 @@ function createBlobService() {
     return blobService;
 }
 
+function parseRangeHeader(range) {
+    if (!range) {
+        return null;
+    }
+
+    let [ rangeStart, rangeEnd ] = range.replace(/bytes=/, '').split('-');
+    rangeStart = parseInt(rangeStart, 10);
+    rangeEnd = rangeEnd && parseInt(rangeEnd, 10);
+
+    return { rangeStart, rangeEnd };
+}
+
 app.get('/video', (req, res) => {
     const videoPath = req.query.path;
     const blobService = createBlobService();
     const containerName = 'videos';
+
+    // const rangeHeader = req.headers.range;
+    // if (rangeHeader) {
+    //     let [ rangeStart, rangeEnd ] = rangeHeader.replace(/bytes=/, '').split('-');
+    //     rangeStart = parseInt(rangeStart, 10);
+    //     rangeEnd = rangeEnd && parseInt(rangeEnd, 10);
+
+    //     // console.log(rangeHeader);
+    //     // matches = rangeHeader.match(/(\d+)-(\d+)?/);
+    //     // rangeStart = parseInt(matches[1]);
+    //     // rangeEnd = matches[2] && parseInt(matches[2]);
+        
+    // }
+
+    // console.log(
+    //     {rangeStart, rangeEnd}
+    // );
     
     blobService.getBlobProperties(containerName, videoPath, (err, properties) => {
         if (err) {
@@ -26,17 +55,30 @@ app.get('/video', (req, res) => {
 
         contentType = properties.contentSettings.contentType || mime.getType(properties.name);
 
+        const range = parseRangeHeader(req.headers.range);
+        const headers = {
+            'Content-Length': properties.contentLength,
+            'Content-Type': contentType,
+            'Accept-Ranges': 'bytes'
+        };
+
+        if (range) {
+            range.rangeStart = range.rangeStart || 0;
+            range.rangeEnd = range.rangeEnd || (properties.contentLength - 1);
+
+            headers['Content-Length'] = range.rangeEnd - range.rangeStart + 1;
+            headers['Content-Range'] = `bytes ${range.rangeStart}-${range.rangeEnd}/${properties.contentLength}`;
+        }
+
         res.writeHead(
-            200, 
-            {
-                'Content-Length': properties.contentLength,
-                'Content-Type': contentType
-            }
+            range ? 206 : 200, 
+            headers
         );
         blobService.getBlobToStream(
             containerName, 
             videoPath, 
             res, 
+            range || {},
             err => {
                 if (err) {
                     res.sendStatus(500);
