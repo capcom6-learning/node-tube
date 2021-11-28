@@ -1,6 +1,5 @@
 const express = require('express');
-const azure = require('azure-storage');
-const mime = require('mime');
+const { BlobServiceClient, StorageSharedKeyCredential, BlobClient } = require("@azure/storage-blob");
 
 require('dotenv').config()
 
@@ -20,9 +19,12 @@ if (!process.env.STORAGE_ACCESS_KEY) {
     throw new Error('Please specify the Azure storage access key with the enviroment variable STORAGE_ACCESS_KEY.');
 }
 
-function createBlobService() {
-    const blobService = azure.createBlobService(STORAGE_ACCOUNT_NAME, STORAGE_ACCESS_KEY);
-    return blobService;
+function createBlobServiceClient() {
+    const sharedKeyCredential = new StorageSharedKeyCredential(STORAGE_ACCOUNT_NAME, STORAGE_ACCESS_KEY);
+    return new BlobServiceClient(
+        `https://${STORAGE_ACCOUNT_NAME}.blob.core.windows.net`,
+        sharedKeyCredential
+    );
 }
 
 function parseRangeHeader(range) {
@@ -39,50 +41,50 @@ function parseRangeHeader(range) {
 
 app.get('/video', (req, res) => {
     const videoPath = req.query.path;
-    const blobService = createBlobService();
+    const blobServiceClient = createBlobServiceClient();
     const containerName = 'videos';
+
+    const internalErrorFn = () => {
+        res.sendStatus(500);
+        return;
+    };
+
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+    const blobClient = containerClient.getBlobClient(videoPath);
+    blobClient.getProperties()
+        .then((properties) => {
+            const contentType = properties.contentType;
+            const range = parseRangeHeader(req.headers.range);
+
+            const headers = {
+                'Content-Length': properties.contentLength,
+                'Content-Type': contentType,
+                'Accept-Ranges': 'bytes'
+            };
+            
+            if (range) {
+                range.rangeStart = range.rangeStart || 0;
+                range.rangeEnd = range.rangeEnd || (properties.contentLength - 1);
     
-    blobService.getBlobProperties(containerName, videoPath, (err, properties) => {
-        if (err) {
-            res.sendStatus(500);
-            return;
-        }
-
-        contentType = properties.contentSettings.contentType || mime.getType(properties.name);
-
-        const range = parseRangeHeader(req.headers.range);
-        const headers = {
-            'Content-Length': properties.contentLength,
-            'Content-Type': contentType,
-            'Accept-Ranges': 'bytes'
-        };
-
-        if (range) {
-            range.rangeStart = range.rangeStart || 0;
-            range.rangeEnd = range.rangeEnd || (properties.contentLength - 1);
-
-            headers['Content-Length'] = range.rangeEnd - range.rangeStart + 1;
-            headers['Content-Range'] = `bytes ${range.rangeStart}-${range.rangeEnd}/${properties.contentLength}`;
-        }
-
-        res.writeHead(
-            range ? 206 : 200, 
-            headers
-        );
-        blobService.getBlobToStream(
-            containerName, 
-            videoPath, 
-            res, 
-            range || {},
-            err => {
-                if (err) {
-                    res.sendStatus(500);
-                }
+                headers['Content-Length'] = range.rangeEnd - range.rangeStart + 1;
+                headers['Content-Range'] = `bytes ${range.rangeStart}-${range.rangeEnd}/${properties.contentLength}`;
             }
-        );
-    });
+    
+            res.writeHead(
+                range ? 206 : 200, 
+                headers
+            );
+
+            const offset = range ? range.rangeStart : 0;
+            const count = range ? range.rangeEnd - range.rangeStart + 1 : properties.contentLength;
+            return blobClient.download(offset, count);
+        })
+        .then((downloader) => {
+            downloader.readableStreamBody.pipe(res);
+        })
+        .catch(internalErrorFn);
 });
 
 app.listen(PORT, () => {
-    console.log(`Microservice online on port ${PORT}`);
+    console.log(`Video storage (Azure) service is online on port ${PORT}`);
 });
