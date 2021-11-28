@@ -4,6 +4,8 @@ const express = require('express');
 const fs = require('fs');
 const app = express();
 
+require('dotenv').config()
+
 if (!process.env.PORT) {
     throw new Error('Please specify the port number for the HTTP server with the enviroment variable PORT.');
 }
