@@ -2,6 +2,8 @@ const express = require('express');
 const azure = require('azure-storage');
 const mime = require('mime');
 
+require('dotenv').config()
+
 const app = express();
 
 const PORT = process.env.PORT;
@@ -89,5 +91,5 @@ app.get('/video', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log('Microservice online');
+    console.log(`Microservice online on port ${PORT}`);
 });
