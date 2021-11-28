@@ -10,6 +10,16 @@ const PORT = process.env.PORT;
 const STORAGE_ACCOUNT_NAME = process.env.STORAGE_ACCOUNT_NAME;
 const STORAGE_ACCESS_KEY = process.env.STORAGE_ACCESS_KEY;
 
+if (!process.env.PORT) {
+    throw new Error('Please specify the port number for the HTTP server with the enviroment variable PORT.');
+}
+if (!process.env.STORAGE_ACCOUNT_NAME) {
+    throw new Error('Please specify the Azure storage account name with the enviroment variable STORAGE_ACCOUNT_NAME.');
+}
+if (!process.env.STORAGE_ACCESS_KEY) {
+    throw new Error('Please specify the Azure storage access key with the enviroment variable STORAGE_ACCESS_KEY.');
+}
+
 function createBlobService() {
     const blobService = azure.createBlobService(STORAGE_ACCOUNT_NAME, STORAGE_ACCESS_KEY);
     return blobService;
@@ -31,23 +41,6 @@ app.get('/video', (req, res) => {
     const videoPath = req.query.path;
     const blobService = createBlobService();
     const containerName = 'videos';
-
-    // const rangeHeader = req.headers.range;
-    // if (rangeHeader) {
-    //     let [ rangeStart, rangeEnd ] = rangeHeader.replace(/bytes=/, '').split('-');
-    //     rangeStart = parseInt(rangeStart, 10);
-    //     rangeEnd = rangeEnd && parseInt(rangeEnd, 10);
-
-    //     // console.log(rangeHeader);
-    //     // matches = rangeHeader.match(/(\d+)-(\d+)?/);
-    //     // rangeStart = parseInt(matches[1]);
-    //     // rangeEnd = matches[2] && parseInt(matches[2]);
-        
-    // }
-
-    // console.log(
-    //     {rangeStart, rangeEnd}
-    // );
     
     blobService.getBlobProperties(containerName, videoPath, (err, properties) => {
         if (err) {
