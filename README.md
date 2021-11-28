@@ -16,3 +16,8 @@ Based on Node.js + Express.
 ## How to start?
 
 Use `make up` and `make down` to start and stop containers.
+
+## See also
+
+* Go + Fiber version: https://github.com/capcom6/go-tube
+* Python + Flask version: https://github.com/capcom6/py-tube
