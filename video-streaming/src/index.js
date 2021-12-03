@@ -1,3 +1,5 @@
+const config = require('./config');
+
 const path = require('path');
 
 const express = require('express');
@@ -5,30 +7,6 @@ const http = require('http');
 const mongodb = require('mongodb');
 
 const app = express();
-
-require('dotenv').config()
-
-if (!process.env.PORT) {
-    throw new Error('Please specify the port number for the HTTP server with the enviroment variable PORT.');
-}
-if (!process.env.VIDEO_STORAGE_HOST) {
-    throw new Error('Please specify video storage address with the enviroment variable VIDEO_STORAGE_HOST.');
-}
-if (!process.env.VIDEO_STORAGE_PORT) {
-    throw new Error('Please specify video storage port with the enviroment variable VIDEO_STORAGE_PORT.');
-}
-if (!process.env.DBHOST) {
-    throw new Error('Please specify database address with the enviroment variable DBHOST.');
-}
-if (!process.env.DBNAME) {
-    throw new Error('Please specify database name with the enviroment variable DBNAME.');
-}
-
-const PORT = process.env.PORT;
-const VIDEO_STORAGE_HOST = process.env.VIDEO_STORAGE_HOST;
-const VIDEO_STORAGE_PORT = parseInt(process.env.VIDEO_STORAGE_PORT);
-const DBHOST = process.env.DBHOST;
-const DBNAME = process.env.DBNAME;
 
 function addRoutes(videoCollection) {
     app.get('/', (req, res) => {
@@ -45,8 +23,8 @@ function addRoutes(videoCollection) {
                 }
 
                 const forwardRequest = http.request({
-                    host: VIDEO_STORAGE_HOST,
-                    port: VIDEO_STORAGE_PORT,
+                    host: config.videoStorageHost,
+                    port: config.videoStoragePort,
                     path: `/video?path=${videoRecord.videoPath}`,
                     method: 'GET',
                     headers: req.headers
@@ -70,9 +48,9 @@ function addRoutes(videoCollection) {
 }
 
 function main() {
-    return mongodb.MongoClient.connect(DBHOST)
+    return mongodb.MongoClient.connect(config.dbhost)
         .then(client => {
-            const db = client.db(DBNAME);
+            const db = client.db(config.dbname);
             const videoCollection = db.collection('videos');
 
             addRoutes(videoCollection);
@@ -81,7 +59,7 @@ function main() {
 
 main()
     .then(() => {
-        console.log(`Video streaming service is listeting on port ${PORT}!`);
+        console.log(`Video streaming service is listeting on port ${config.port}!`);
     })
     .catch(err => {
         console.error('Video streaming service failed to start.');
