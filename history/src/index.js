@@ -2,7 +2,9 @@ const config = require('./config');
 const express = require('express');
 
 function setupHandlers(app) {
-    
+    app.get('/', (req, res) => {
+        res.send('Node History Service');
+    });
 }
 
 function startHttpServer() {
