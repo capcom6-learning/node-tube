@@ -5,7 +5,8 @@ services:
     image: node-video-streaming
     build:
       context: ./video-streaming
-      dockerfile: Dockerfile-dev
+      dockerfile: Dockerfile
+      target: dev
     container_name: node-video-streaming
     ports:
       - "4000:80"
@@ -25,7 +26,8 @@ services:
     image: node-video-storage
     build:
       context: ./video-storage-azure
-      dockerfile: Dockerfile-dev
+      dockerfile: Dockerfile
+      target: dev
     container_name: node-video-storage
     ports:
       - "4001:80"
@@ -48,7 +50,8 @@ services:
     image: node-history
     build:
       context: ./history
-      dockerfile: Dockerfile-dev
+      dockerfile: Dockerfile
+      target: dev
     container_name: node-history
     ports:
       - "4003:80"
