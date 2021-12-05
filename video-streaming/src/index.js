@@ -42,8 +42,8 @@ function addRoutes(videoCollection) {
             });
     });
     
-    app.listen(PORT, () => {
-        console.log(`Video streaming service is listeting on port ${PORT}!`);
+    app.listen(config.port, () => {
+        console.log(`Video streaming service is listeting on port ${config.port}!`);
     });
 }
 
