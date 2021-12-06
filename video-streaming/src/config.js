@@ -15,6 +15,12 @@ if (!process.env.DBHOST) {
 if (!process.env.DBNAME) {
     throw new Error('Please specify database name with the enviroment variable DBNAME.');
 }
+if (!process.env.HISTORY_HOST) {
+    throw new Error('Please specify history service address with the enviroment variable HISTORY_HOST.');
+}
+if (!process.env.HISTORY_PORT || !parseInt(process.env.HISTORY_PORT)) {
+    throw new Error('Please specify history service port with the enviroment variable HISTORY_PORT.');
+}
 
 const PORT = process.env.PORT;
 const VIDEO_STORAGE_HOST = process.env.VIDEO_STORAGE_HOST;
@@ -27,5 +33,7 @@ module.exports = {
     videoStorageHost: VIDEO_STORAGE_HOST,
     videoStoragePort: VIDEO_STORAGE_PORT,
     dbhost: DBHOST,
-    dbname: DBNAME
+    dbname: DBNAME,
+    historyHost: process.env.HISTORY_HOST,
+    historyPort: parseInt(process.env.HISTORY_PORT)
 };

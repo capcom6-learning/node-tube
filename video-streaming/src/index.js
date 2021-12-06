@@ -6,6 +6,8 @@ const express = require('express');
 const http = require('http');
 const mongodb = require('mongodb');
 
+const historyService = require('./services/history');
+
 const app = express();
 
 function addRoutes(videoCollection) {
@@ -20,6 +22,10 @@ function addRoutes(videoCollection) {
                 if (!videoRecord) {
                     res.sendStatus(404);
                     return;
+                }
+
+                if (!req.header('Range')) {
+                    historyService.sendViewedMessage(videoRecord.videoPath);
                 }
 
                 const forwardRequest = http.request({
