@@ -5,12 +5,15 @@ const path = require('path');
 const express = require('express');
 const http = require('http');
 const mongodb = require('mongodb');
+const amqp = require('amqplib');
 
 const historyService = require('./services/history');
 
 const app = express();
 
-function addRoutes(videoCollection) {
+function addRoutes(db, channel) {
+    const videoCollection = db.collection('videos');
+
     app.get('/', (req, res) => {
         res.send('Node Video Streaming Service');
     });
@@ -25,7 +28,7 @@ function addRoutes(videoCollection) {
                 }
 
                 if (!req.header('Range')) {
-                    historyService.sendViewedMessage(videoRecord.videoPath);
+                    historyService.sendViewedMessage(channel, videoRecord.videoPath);
                 }
 
                 const forwardRequest = http.request({
@@ -53,14 +56,36 @@ function addRoutes(videoCollection) {
     });
 }
 
-function main() {
-    return mongodb.MongoClient.connect(config.dbhost)
-        .then(client => {
-            const db = client.db(config.dbname);
-            const videoCollection = db.collection('videos');
-
-            addRoutes(videoCollection);
+function connectRabbit() {
+    return amqp.connect(config.rabbit)
+        .then(connection => {
+            return connection.createChannel();
         });
+}
+
+function connectDb() {
+    return mongodb.MongoClient.connect(config.dbHost)
+        .then(client => {
+            return client.db(config.dbName);
+        });
+}
+
+function main() {
+    return connectDb()
+        .then(db => {
+            return connectRabbit()
+                .then(channel => {
+                    addRoutes(db, channel)
+                });
+        });
+
+    // return mongodb.MongoClient.connect(config.dbhost)
+    //     .then(client => {
+    //         const db = client.db(config.dbname);
+    //         const videoCollection = db.collection('videos');
+
+    //         addRoutes(videoCollection);
+    //     });
 };
 
 main()

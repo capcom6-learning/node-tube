@@ -18,7 +18,7 @@ module.exports.setupHandlers = (app, db, channel) => {
 
     const consumeMessage = (msg) => {
         const parsedMsg = JSON.parse(msg.content.toString());
-        return videosCollection.insertOne({ videoPath: videoPath })
+        return videosCollection.insertOne({ videoPath: parsedMsg.videoPath })
             .then(() => {
                 channel.ack(msg);
             });

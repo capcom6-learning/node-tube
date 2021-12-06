@@ -1,31 +1,15 @@
 const logger = require('./log');
-const http = require('http');
 const config = require('../config');
 
 /**
  * Send viewed event to history service
  * @param {string} videoPath 
  */
-module.exports.sendViewedMessage = (videoPath) => {
-    const postOptions = {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    };
-    const requestBody = {
+module.exports.sendViewedMessage = (channel, videoPath) => {
+    const msg = {
         videoPath: videoPath
     };
+    const jsonMsg = JSON.stringify(msg);
 
-    const req = http.request(`http://${config.historyHost}:${config.historyPort}/viewed`, postOptions);
-    req.on('close', () => {
-
-    });
-    req.on('error', (err) => {
-        logger.logError(err, 'Failed to send viewed event.');
-    });
-
-    req.write(JSON.stringify(requestBody));
-
-    req.end();
+    channel.publish('', 'viewed', Buffer.from(jsonMsg));
 };
