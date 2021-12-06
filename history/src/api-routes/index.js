@@ -1,13 +1,8 @@
-
 const logger = require('../services/log')
 
-/**
- * Setup API handlers
- * @param {Express} app 
- * @param {mongodb.MongoClient} db 
- */
-module.exports.setupHandlers = (app, db) => {
+module.exports.setupHandlers = (app, db, channel) => {
     const videosCollection = db.collection('videos');
+
     app.post('/viewed', (req, res) => {
         const videoPath = req.body.videoPath;
         videosCollection.insertOne({ videoPath: videoPath })
@@ -20,4 +15,17 @@ module.exports.setupHandlers = (app, db) => {
                 res.sendStatus(500);
             });
     });
+
+    const consumeMessage = (msg) => {
+        const parsedMsg = JSON.parse(msg.content.toString());
+        return videosCollection.insertOne({ videoPath: videoPath })
+            .then(() => {
+                channel.ack(msg);
+            });
+    };
+
+    return channel.assertQueue('viewed', {})
+        .then(() => {
+            return channel.consume('viewed', consumeMessage);
+        });
 };

@@ -23,6 +23,8 @@ services:
       - /tmp/video-streaming/npm-cache:/root/.npm:z
       - "./video-streaming/src:/usr/src/app/src:z"
     restart: 'no'
+    depends_on:
+      - db
 
   video-storage:
     image: node-video-storage
@@ -61,11 +63,15 @@ services:
       - PORT=80
       - DBHOST=mongodb://db:27017
       - DBNAME=history
+      - RABBIT=amqp://guest:guest@rabbit:5672
       - "NODE_ENV=development"
     volumes:
       - /tmp/history/npm-cache:/root/.npm:z
       - "./history/src:/usr/src/app/src:z"
     restart: 'no'
+    depends_on:
+      - db
+      - rabbit
     
   rabbit:
     image: rabbitmq:3.8-management

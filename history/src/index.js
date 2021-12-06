@@ -4,25 +4,26 @@ const express = require('express');
 const bodyParser = require('body-parser')
 
 const mongodb = require('mongodb');
+const amqp = require('amqplib');
 
 const service = require('./api-routes')
 
-function setupHandlers(app, db) {
+function setupHandlers(app, db, channel) {
     app.get('/', (req, res) => {
         res.send('Node History Service');
     });
 
-    service.setupHandlers(app, db);
+    service.setupHandlers(app, db, channel);
 }
 
-function startHttpServer(db) {
+function startHttpServer(db, channel) {
     return new Promise(resolve => {
         const app = express();
 
         // parse application/json
         app.use(bodyParser.json())
 
-        setupHandlers(app, db);
+        setupHandlers(app, db, channel);
 
         app.listen(config.port, () => {
             resolve();
@@ -30,12 +31,27 @@ function startHttpServer(db) {
     });
 }
 
-function main() {
+function connectRabbit() {
+    return amqp.connect(config.rabbit)
+        .then(connection => {
+            return connection.createChannel();
+        });
+}
+
+function connectDb() {
     return mongodb.MongoClient.connect(config.dbHost)
         .then(client => {
-            const db = client.db(config.dbName);
+            return client.db(config.dbName);
+        });
+}
 
-            return startHttpServer(db);
+function main() {
+    return connectDb()
+        .then(db => {
+            return connectRabbit()
+            .then(channel => {
+                return startHttpServer(db, channel);
+            })
         });
 }
 
