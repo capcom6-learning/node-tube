@@ -67,3 +67,13 @@ services:
       - "./history/src:/usr/src/app/src:z"
     restart: 'no'
     
+  rabbit:
+    image: rabbitmq:3.8-management
+    container_name: node-rabbit
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    expose:
+      - 5672
+      - 15672
+    restart: always
