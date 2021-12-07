@@ -24,8 +24,15 @@ module.exports.setupHandlers = (app, db, channel) => {
             });
     };
 
-    return channel.assertQueue('viewed', {})
+    return channel.assertExchange('viewed', 'fanout')
         .then(() => {
-            return channel.consume('viewed', consumeMessage);
+            return channel.assertQueue('', { exclusive: true });
+        })
+        .then(response => {
+            const queueName = response.queue;
+            return channel.bindQueue(queueName, 'viewed', '')
+                .then(() => {
+                    return channel.consume(queueName, consumeMessage);
+                });
         });
 };

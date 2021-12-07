@@ -60,6 +60,10 @@ function connectRabbit() {
     return amqp.connect(config.rabbit)
         .then(connection => {
             return connection.createChannel();
+        })
+        .then(channel => {
+            return channel.assertExchange('viewed', 'fanout')
+            .then(() => channel);
         });
 }
 
@@ -78,14 +82,6 @@ function main() {
                     addRoutes(db, channel)
                 });
         });
-
-    // return mongodb.MongoClient.connect(config.dbhost)
-    //     .then(client => {
-    //         const db = client.db(config.dbname);
-    //         const videoCollection = db.collection('videos');
-
-    //         addRoutes(videoCollection);
-    //     });
 };
 
 main()

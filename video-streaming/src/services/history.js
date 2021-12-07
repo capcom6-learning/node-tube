@@ -11,5 +11,5 @@ module.exports.sendViewedMessage = (channel, videoPath) => {
     };
     const jsonMsg = JSON.stringify(msg);
 
-    channel.publish('', 'viewed', Buffer.from(jsonMsg));
+    channel.publish('viewed', '', Buffer.from(jsonMsg));
 };
