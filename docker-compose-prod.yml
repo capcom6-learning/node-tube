@@ -70,3 +70,22 @@ services:
       - 5672
       - 15672
     restart: always
+
+  recommendations:
+    image: node-recommendations
+    build:
+      context: ./recommendations
+      dockerfile: Dockerfile
+      target: prod
+    container_name: node-recommendations
+    ports:
+      - "4004:80"
+    environment:
+      - PORT=80
+      - DBHOST=mongodb://db:27017
+      - DBNAME=recommendations
+      - RABBIT=amqp://guest:guest@rabbit:5672
+    restart: 'no'
+    depends_on:
+      - db
+      - rabbit
