@@ -19,7 +19,6 @@ COPY package*.json ./
 
 RUN npm install --only=production
 
-COPY .env .env
 COPY ./src ./src
 
 CMD npm start
