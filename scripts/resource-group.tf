@@ -1,4 +1,4 @@
-resource "azurerm_resource_group" "node-tube" {
-    name = "node-tube"
-    location = "West Europe"
+resource "azurerm_resource_group" "tube" {
+    name = var.app_name
+    location = var.location
 }
