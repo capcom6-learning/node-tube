@@ -12,8 +12,8 @@ resource "azurerm_kubernetes_cluster" "cluster" {
     }
 
     service_principal {
-      client_id = var.client_id
-      client_secret = var.client_secret
+      client_id = azuread_application.nodetube.application_id
+      client_secret = azuread_service_principal_password.nodetube.value
     }
 
     linux_profile {
