@@ -2,7 +2,7 @@ FROM node:12 as dev
 
 WORKDIR /usr/src/app
 
-COPY .env .env
+# COPY .env .env
 COPY package*.json ./
 
 CMD npm config set cache-min 9999999 && \
