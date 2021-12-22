@@ -1,7 +1,5 @@
 const config = require('./config');
 
-const path = require('path');
-
 const express = require('express');
 const http = require('http');
 const mongodb = require('mongodb');
@@ -9,16 +7,16 @@ const amqp = require('amqplib');
 
 const historyService = require('./services/history');
 
-const app = express();
+function setupHandlers(microservice) {
+    const videoCollection = microservice.db.collection('videos');
+    const channel = microservice.channel;
+    const history = microservice.history;
 
-function addRoutes(db, channel) {
-    const videoCollection = db.collection('videos');
-
-    app.get('/', (req, res) => {
+    microservice.app.get('/', (req, res) => {
         res.send('Node Video Streaming Service');
     });
     
-    app.get('/video', (req, res) => {
+    microservice.app.get('/video', (req, res) => {
         const videoId = new mongodb.ObjectId(req.query.id);
         videoCollection.findOne({ _id: videoId })
             .then(videoRecord => {
@@ -28,7 +26,7 @@ function addRoutes(db, channel) {
                 }
 
                 if (!req.header('Range')) {
-                    historyService.sendViewedMessage(channel, videoRecord.videoPath);
+                    history.sendViewedMessage(channel, videoRecord.videoPath);
                 }
 
                 const forwardRequest = http.request({
@@ -51,13 +49,24 @@ function addRoutes(db, channel) {
             });
     });
     
-    app.listen(config.port, () => {
-        console.log(`Video streaming service is listeting on port ${config.port}!`);
+    microservice.app.get('/videos', (req, res) => {
+        return videoCollection.find()
+            .toArray()
+            .then(videos => {
+                res.json({
+                    videos
+                });
+            })
+            .catch(err => {
+                console.error("Failed to get videos collection from database!");
+                console.error(err && err.stack || err);
+                res.sendStatus(500);
+            });
     });
 }
 
-function connectRabbit() {
-    return amqp.connect(config.rabbit)
+function connectRabbit(connectionString) {
+    return amqp.connect(connectionString)
         .then(connection => {
             return connection.createChannel();
         })
@@ -67,28 +76,67 @@ function connectRabbit() {
         });
 }
 
-function connectDb() {
-    return mongodb.MongoClient.connect(config.dbHost)
+function connectDb(dbHost, dbName) {
+    return mongodb.MongoClient.connect(dbHost)
         .then(client => {
-            return client.db(config.dbName);
+            const db = client.db(dbName);
+            return {
+                db,
+                close: () => client.close()
+            };
         });
 }
 
-function main() {
-    return connectDb()
-        .then(db => {
-            return connectRabbit()
-                .then(channel => {
-                    addRoutes(db, channel)
+function startHttpServer(port, db, channel, history) {
+    return new Promise(resolve => {
+        const app = express();
+        const microservice = {
+            app,
+            channel,
+            history,
+            db: db.db, 
+        };
+        setupHandlers(microservice);
+
+        const server = app.listen(port, () => {
+            microservice.close = () => {
+                return new Promise(resolve => {
+                    server.close(() => resolve());
+                })
+                .then(() => {
+                    return db.close();
                 });
+            };
+            resolve(microservice);
         });
+    });
+}
+
+async function startMicroservice(config) {
+    const db = await connectDb(config.dbHost, config.dbName);
+    const channel = await connectRabbit(config.rabbit);
+
+    return startHttpServer(config.port, db, channel, historyService);
+}
+
+async function main() {
+    return startMicroservice(config);
 };
 
-main()
-    .then(() => {
-        console.log(`Video streaming service is listeting on port ${config.port}!`);
-    })
-    .catch(err => {
-        console.error('Video streaming service failed to start.');
-        console.error(err && err.stack || err);
-    });
+if (require.main === module) {
+    // Only start the microservice normally if this script is the "main" module.
+    main()
+        .then(() => {
+            console.log(`Video streaming service is listeting on port ${config.port}!`);
+        })
+        .catch(err => {
+            console.error('Video streaming service failed to start.');
+            console.error(err && err.stack || err);
+        });
+}
+else {
+    // Otherwise we are running under test
+    module.exports = {
+        startMicroservice,
+    };
+}
