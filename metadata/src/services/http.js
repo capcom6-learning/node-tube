@@ -2,12 +2,12 @@ const express = require('express');
 
 const { setupHandlers } = require("../api-routes");
 
-module.exports.startHttpServer = async (port, dbConn) => {
+module.exports.startHttpServer = async (port, db) => {
     return new Promise(resolve => { // Wrap in a promise so we can be notified when the server has started.
         const app = express();
         const microservice = { // Create an object to represent our microservice.
-            app: app,
-            db: dbConn.db,
+            app,
+            db: db.db,
         }
         setupHandlers(microservice);
 
@@ -18,7 +18,7 @@ module.exports.startHttpServer = async (port, dbConn) => {
                         resolve();
                     });
                 });
-                return dbConn.close();
+                return db.close();
             };
             resolve(microservice);
         });

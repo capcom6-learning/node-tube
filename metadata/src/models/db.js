@@ -5,7 +5,7 @@ module.exports.connectDb = async (dbHost, dbName) => {
         .then(client => {
             const db = client.db(dbName);
             return {                // Return an object that represents the database connection.
-                db: db,             // To access the database...
+                db,             // To access the database...
                 close: () => {      // and later close the connection to it.
                     return client.close();
                 },
