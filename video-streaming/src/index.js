@@ -1,67 +1,81 @@
-const config = require('./config');
+//@ts-check
 
 const express = require('express');
-const http = require('http');
-const mongodb = require('mongodb');
 const amqp = require('amqplib');
+const http = require('http');
+const logger = require('./services/log');
 
-const historyService = require('./services/history');
-
+/**
+ * @param {{ app: any; channel: any; history: any; metadata: import("./services/metadata"); storage: import("./services/storage"); }} microservice
+ */
 function setupHandlers(microservice) {
-    const videoCollection = microservice.db.collection('videos');
     const channel = microservice.channel;
     const history = microservice.history;
+    const metadata = microservice.metadata;
+    const storage = microservice.storage;
 
-    microservice.app.get('/', (req, res) => {
+    microservice.app.get('/', (/** @type {express.Request} */ req, /** @type {express.Response} */ res) => {
         res.send('Node Video Streaming Service');
     });
     
-    microservice.app.get('/video', (req, res) => {
-        const videoId = new mongodb.ObjectId(req.query.id);
-        videoCollection.findOne({ _id: videoId })
-            .then(videoRecord => {
-                if (!videoRecord) {
-                    res.sendStatus(404);
-                    return;
-                }
+    microservice.app.get('/video', (/** @type {express.Request} */ req, /** @type {express.Response} */ res) => {
+        if (!('id' in req.query) || !req.query.id) {
+            res.sendStatus(400);
+            return;
+        }
 
+        metadata.getVideo(String(req.query.id))
+            .then(videoRecord => {
                 if (!req.header('Range')) {
                     history.sendViewedMessage(channel, videoRecord.videoPath);
                 }
 
-                const forwardRequest = http.request({
-                    host: config.videoStorageHost,
-                    port: config.videoStoragePort,
-                    path: `/video?path=${videoRecord.videoPath}`,
-                    method: 'GET',
-                    headers: req.headers
-                }, forwardResponse => {
-                    res.writeHead(forwardResponse.statusCode, forwardResponse.headers);
-                    forwardResponse.pipe(res);
-                });
+                const forwardRequest = storage.makeRequest(
+                    videoRecord.videoPath, 
+                    req.header, 
+                    forwardResponse => {
+                        res.writeHead(forwardResponse.statusCode, forwardResponse.headers);
+                        forwardResponse.pipe(res);
+                    });
             
                 req.pipe(forwardRequest);
             })
             .catch(err => {
-                console.error('Database query error');
-                console.error(err && err.stack || err);
+                logger.logError(err, `Failed to get video by id ${req.query.id}`);
                 res.sendStatus(500);
             });
-    });
-    
-    microservice.app.get('/videos', (req, res) => {
-        return videoCollection.find()
-            .toArray()
-            .then(videos => {
-                res.json({
-                    videos
-                });
-            })
-            .catch(err => {
-                console.error("Failed to get videos collection from database!");
-                console.error(err && err.stack || err);
-                res.sendStatus(500);
-            });
+
+
+        // const videoId = new mongodb.ObjectId(req.query.id);
+        // videoCollection.findOne({ _id: videoId })
+        //     .then(videoRecord => {
+        //         if (!videoRecord) {
+        //             res.sendStatus(404);
+        //             return;
+        //         }
+
+        //         if (!req.header('Range')) {
+        //             history.sendViewedMessage(channel, videoRecord.videoPath);
+        //         }
+
+        //         const forwardRequest = http.request({
+        //             host: config.videoStorageHost,
+        //             port: config.videoStoragePort,
+        //             path: `/video?path=${videoRecord.videoPath}`,
+        //             method: 'GET',
+        //             headers: req.headers
+        //         }, forwardResponse => {
+        //             res.writeHead(forwardResponse.statusCode, forwardResponse.headers);
+        //             forwardResponse.pipe(res);
+        //         });
+            
+        //         req.pipe(forwardRequest);
+        //     })
+        //     .catch(err => {
+        //         console.error('Database query error');
+        //         console.error(err && err.stack || err);
+        //         res.sendStatus(500);
+        //     });
     });
 }
 
@@ -76,25 +90,22 @@ function connectRabbit(connectionString) {
         });
 }
 
-function connectDb(dbHost, dbName) {
-    return mongodb.MongoClient.connect(dbHost)
-        .then(client => {
-            const db = client.db(dbName);
-            return {
-                db,
-                close: () => client.close()
-            };
-        });
-}
-
-function startHttpServer(port, db, channel, history) {
+/**
+ * @param {number} port
+ * @param {amqp.Channel} channel
+ * @param {typeof import("./services/history")} history
+ * @param {import("./services/metadata")} metadata
+ * @param {import("./services/storage")} storage
+ */
+function startHttpServer(port, channel, history, metadata, storage) {
     return new Promise(resolve => {
         const app = express();
         const microservice = {
             app,
             channel,
             history,
-            db: db.db, 
+            metadata,
+            storage
         };
         setupHandlers(microservice);
 
@@ -102,9 +113,6 @@ function startHttpServer(port, db, channel, history) {
             microservice.close = () => {
                 return new Promise(resolve => {
                     server.close(() => resolve());
-                })
-                .then(() => {
-                    return db.close();
                 });
             };
             resolve(microservice);
@@ -113,19 +121,30 @@ function startHttpServer(port, db, channel, history) {
 }
 
 async function startMicroservice(config) {
-    const db = await connectDb(config.dbHost, config.dbName);
+    const historyService = require('./services/history');
+    const MetadataService = require('./services/metadata');
+    const StorageService = require('./services/storage');
+
     const channel = await connectRabbit(config.rabbit);
 
-    return startHttpServer(config.port, db, channel, historyService);
+    return startHttpServer(
+        config.port, 
+        channel, 
+        historyService,
+        new MetadataService(config.metadataHost, config.metadataPort),
+        new StorageService(config.videoStorageHost, config.videoStoragePort)
+        );
 }
 
-async function main() {
+async function main(config) {
     return startMicroservice(config);
 };
 
 if (require.main === module) {
+    const config = require('./config');
+
     // Only start the microservice normally if this script is the "main" module.
-    main()
+    main(config)
         .then(() => {
             console.log(`Video streaming service is listeting on port ${config.port}!`);
         })

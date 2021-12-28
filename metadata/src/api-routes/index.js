@@ -13,8 +13,8 @@ module.exports.setupHandlers = ({ app, db }) => {
     });
 
     app.get('/video', (/** @type {express.Request} */ req, /** @type {express.Response} */ res) => {
-        if ('id' in req.params && req.params.id) {
-            return videos.getById(videosCollection, req.params.id)
+        if ('id' in req.query && req.query.id) {
+            return videos.getById(videosCollection, String(req.query.id))
                 .then(video => {
                     if (!video) {
                         res.sendStatus(404);
