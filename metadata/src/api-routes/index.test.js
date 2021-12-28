@@ -29,7 +29,7 @@ describe('API routes', () => {
 
         expect(mockGetFn.mock.calls.length).toEqual(2); // two routes
         expect(mockGetFn.mock.calls.some((call) => { return call[0] === '/'; })).toBeTruthy();  // one is root
-        expect(mockGetFn.mock.calls.some((call) => { return call[0] === '/videos'; })).toBeTruthy(); // another is /videos
+        expect(mockGetFn.mock.calls.some((call) => { return call[0] === '/video'; })).toBeTruthy(); // another is /video
     });
 
     

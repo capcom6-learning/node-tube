@@ -136,7 +136,10 @@ describe('metadata microservice units', () => {
                 connect: async () => { // Mock connect function.
                     return mockMongoClient;
                 }
-            }
+            },
+            ObjectId: jest.fn().mockImplementation((id) => {
+                return {id};
+            })
         };
     });
 
@@ -164,14 +167,16 @@ describe('metadata microservice units', () => {
 
         expect(mockGetFn).toHaveBeenCalled();
 
-        expect(mockGetFn.mock.calls.some((call) => { return call[0] === '/videos' })).toBeTruthy();
+        expect(mockGetFn.mock.calls.some((call) => { return call[0] === '/video' })).toBeTruthy();
     });
 
-    test("/videos route retreives data via videos collection", async () => {
+    test("/video route retreives data via videos collection", async () => {
 
         await startMicroservice(mockConfig);
 
-        const mockRequest = {};
+        const mockRequest = {
+            params: {}
+        };
         const mockJsonFn = jest.fn();
         const mockResponse = {
             json: mockJsonFn
@@ -189,12 +194,40 @@ describe('metadata microservice units', () => {
             };
         };
 
-        const videosRouteHandler = mockGetFn.mock.calls.find((call) => { return call[0] === '/videos' })[1]; // Extract the /videos route handler function.
+        const videosRouteHandler = mockGetFn.mock.calls.find((call) => { return call[0] === '/video' })[1]; // Extract the /videos route handler function.
         await videosRouteHandler(mockRequest, mockResponse); // Invoke the request handler.
 
         expect(mockJsonFn.mock.calls.length).toEqual(1); // Expect that the json fn was called.
         expect(mockJsonFn.mock.calls[0][0]).toEqual({
             videos: [ mockRecord1, mockRecord2 ], // Expect that the mock records were retrieved via the mock database function.
         });
+    });
+
+    test("/video route retreives data by id", async () => {
+
+        await startMicroservice(mockConfig);
+
+        const mockRequest = {
+            params: {
+                id: '61a704c1aa87dfcd0e392a42'
+            }
+        };
+        const mockJsonFn = jest.fn();
+        const mockResponse = {
+            json: mockJsonFn
+        };
+
+        const mockRecord = {};
+
+        // Mock the find function to return some mock records.
+        mockVideosCollection.findOne = async (query) => {
+            return mockRecord;
+        };
+
+        const videosRouteHandler = mockGetFn.mock.calls.find((call) => { return call[0] === '/video' })[1]; // Extract the /videos route handler function.
+        await videosRouteHandler(mockRequest, mockResponse); // Invoke the request handler.
+
+        expect(mockJsonFn.mock.calls.length).toEqual(1); // Expect that the json fn was called.
+        expect(mockJsonFn.mock.calls[0][0]).toEqual(mockRecord);
     });
 });
