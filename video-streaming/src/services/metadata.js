@@ -10,7 +10,7 @@ module.exports = class MetadataService {
 
     async selectVideo() {
         const response = await axios.get(`${this.baseUrl}/video`);
-        return response.data;
+        return response.data.videos;
     }
 
     async getVideo(/** @type {string} */ id) {

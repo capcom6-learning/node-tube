@@ -4,80 +4,50 @@ const express = require('express');
 const amqp = require('amqplib');
 const http = require('http');
 const logger = require('./services/log');
+const routes = require('./routes');
 
-/**
- * @param {{ app: any; channel: any; history: any; metadata: import("./services/metadata"); storage: import("./services/storage"); }} microservice
- */
-function setupHandlers(microservice) {
-    const channel = microservice.channel;
-    const history = microservice.history;
-    const metadata = microservice.metadata;
-    const storage = microservice.storage;
 
-    microservice.app.get('/', (/** @type {express.Request} */ req, /** @type {express.Response} */ res) => {
-        res.send('Node Video Streaming Service');
-    });
+// /**
+//  * @param {{ app: any; channel: any; history: any; metadata: import("./services/metadata"); storage: import("./services/storage"); }} microservice
+//  */
+// function setupHandlers(microservice) {
+//     const channel = microservice.channel;
+//     const history = microservice.history;
+//     const metadata = microservice.metadata;
+//     const storage = microservice.storage;
+
+//     microservice.app.get('/', (/** @type {express.Request} */ req, /** @type {express.Response} */ res) => {
+//         res.send('Node Video Streaming Service');
+//     });
     
-    microservice.app.get('/video', (/** @type {express.Request} */ req, /** @type {express.Response} */ res) => {
-        if (!('id' in req.query) || !req.query.id) {
-            res.sendStatus(400);
-            return;
-        }
+//     microservice.app.get('/video', (/** @type {express.Request} */ req, /** @type {express.Response} */ res) => {
+//         if (!('id' in req.query) || !req.query.id) {
+//             res.sendStatus(400);
+//             return;
+//         }
 
-        metadata.getVideo(String(req.query.id))
-            .then(videoRecord => {
-                if (!req.header('Range')) {
-                    history.sendViewedMessage(channel, videoRecord.videoPath);
-                }
+//         metadata.getVideo(String(req.query.id))
+//             .then(videoRecord => {
+//                 if (!req.header('Range')) {
+//                     history.sendViewedMessage(channel, videoRecord.videoPath);
+//                 }
 
-                const forwardRequest = storage.makeRequest(
-                    videoRecord.videoPath, 
-                    req.header, 
-                    forwardResponse => {
-                        res.writeHead(forwardResponse.statusCode, forwardResponse.headers);
-                        forwardResponse.pipe(res);
-                    });
+//                 const forwardRequest = storage.makeRequest(
+//                     videoRecord.videoPath, 
+//                     req.header, 
+//                     forwardResponse => {
+//                         res.writeHead(forwardResponse.statusCode, forwardResponse.headers);
+//                         forwardResponse.pipe(res);
+//                     });
             
-                req.pipe(forwardRequest);
-            })
-            .catch(err => {
-                logger.logError(err, `Failed to get video by id ${req.query.id}`);
-                res.sendStatus(500);
-            });
-
-
-        // const videoId = new mongodb.ObjectId(req.query.id);
-        // videoCollection.findOne({ _id: videoId })
-        //     .then(videoRecord => {
-        //         if (!videoRecord) {
-        //             res.sendStatus(404);
-        //             return;
-        //         }
-
-        //         if (!req.header('Range')) {
-        //             history.sendViewedMessage(channel, videoRecord.videoPath);
-        //         }
-
-        //         const forwardRequest = http.request({
-        //             host: config.videoStorageHost,
-        //             port: config.videoStoragePort,
-        //             path: `/video?path=${videoRecord.videoPath}`,
-        //             method: 'GET',
-        //             headers: req.headers
-        //         }, forwardResponse => {
-        //             res.writeHead(forwardResponse.statusCode, forwardResponse.headers);
-        //             forwardResponse.pipe(res);
-        //         });
-            
-        //         req.pipe(forwardRequest);
-        //     })
-        //     .catch(err => {
-        //         console.error('Database query error');
-        //         console.error(err && err.stack || err);
-        //         res.sendStatus(500);
-        //     });
-    });
-}
+//                 req.pipe(forwardRequest);
+//             })
+//             .catch(err => {
+//                 logger.logError(err, `Failed to get video by id ${req.query.id}`);
+//                 res.sendStatus(500);
+//             });
+//     });
+// }
 
 function connectRabbit(connectionString) {
     return amqp.connect(connectionString)
@@ -107,7 +77,7 @@ function startHttpServer(port, channel, history, metadata, storage) {
             metadata,
             storage
         };
-        setupHandlers(microservice);
+        routes.setupHandlers(microservice);
 
         const server = app.listen(port, () => {
             microservice.close = () => {
