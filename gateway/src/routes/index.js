@@ -4,6 +4,55 @@ const logger = require('../services/log');
 const path = require('path');
 const express = require('express');
 
+class Handler {
+    /**
+     * @param {{ app: import("express").Express; metadata: import("../services/metadata"); }} service
+     */
+    constructor(service) {
+        this.app = service.app;
+        this.metadata = service.metadata;
+
+        this.index = this.index.bind(this);
+        this.upload = this.upload.bind(this);
+        this.history = this.history.bind(this);
+
+        this.app.get('/', this.index);
+        this.app.get('/upload', this.upload);
+        this.app.get('/history', this.history);
+    }
+
+    /**
+     * @param {import("express").Request} req
+     * @param {import("express").Response} res
+     */
+    async index(req, res) {
+        try {
+            const videos = await this.metadata.selectVideo();
+
+            res.render('video-list', { videos });
+        } catch (err) {
+            logger.logError(err, `Failed to get videos`);
+            res.sendStatus(500);
+        }
+    }
+
+    /**
+     * @param {import("express").Request} req
+     * @param {import("express").Response} res
+     */
+    upload(req, res) {
+        res.render("upload-video", {});
+    }
+
+    /**
+     * @param {import("express").Request} req
+     * @param {import("express").Response} res
+     */
+    history(req, res) {
+        res.render("history", { videos: [] });
+    }
+}
+
 /**
  * @param {{ app: import("express").Express; metadata: import("../services/metadata"); }} microservice
  */
@@ -15,18 +64,9 @@ module.exports.setupHandlers = (microservice) => {
     app.set('view engine', 'hbs');
 
     app.use(express.static('public'));
-
-    app.get('/', async (/** @type {import("express").Request} */ req, /** @type {import("express").Response} */ res) => {
-        try {
-            const videos = await metadata.selectVideo();
-
-            res.render('video-list', { videos });
-        } catch (err) {
-            logger.logError(err, `Failed to get videos`);
-            res.sendStatus(500);
-        }
-    });
     
+    new Handler(microservice);
+
     app.get('/video', (/** @type {import("express").Request} */ req, /** @type {import("express").Response} */ res) => {
         if (!('id' in req.query) || !req.query.id) {
             res.sendStatus(400);
