@@ -108,3 +108,19 @@ services:
     restart: 'no'
     depends_on:
       - db
+
+  gateway:
+    image: node-gateway
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+      target: prod
+    container_name: node-gateway
+    ports:
+      - "4006:80"
+    environment:
+      - PORT=80
+      - METADATA_HOST=metadata
+      - METADATA_PORT=80
+    restart: 'no'
+
