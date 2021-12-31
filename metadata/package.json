@@ -19,7 +19,6 @@
   },
   "devDependencies": {
     "axios": "^0.24.0",
-    "cypress": "^9.2.0",
     "jest": "^27.4.5",
     "nodemon": "^2.0.15"
   }
