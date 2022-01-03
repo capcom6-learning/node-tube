@@ -29,11 +29,13 @@ module.exports = class VideoHandler {
 
         this.storage = new Storage(config.storageAccountName, config.storageAccessKey, containerName);
 
-        this.getVideo = this.getVideo.bind(this);
         this.index = this.index.bind(this);
+        this.getVideo = this.getVideo.bind(this);
+        this.putVideo = this.putVideo.bind(this);
 
         app.get('/', this.index);
         app.get('/video', this.getVideo);
+        app.put('/video', this.putVideo);
     }
 
     /**
@@ -86,6 +88,29 @@ module.exports = class VideoHandler {
             .catch((err) => {
                 logger.logError(err, `Failed to retrieve and send video for ${videoPath}`);
                 res.sendStatus(500);
+            });
+    }
+
+    /**
+     * @param {import('express').Request} req
+     * @param {import('express').Response} res
+     */
+    putVideo(req, res) {
+        const videoPath = req.query.path;
+        if (!videoPath) {
+            res.sendStatus(400);
+            return;
+        }
+
+        this.storage.uploadTo(videoPath.toString(), req)
+            .then(() => {
+                res.sendStatus(201);
+                return;
+            })
+            .catch((err) => {
+                logger.logError(err, `Failed to upload video for ${videoPath}`);
+                res.sendStatus(500);
+                return;
             });
     }
 }

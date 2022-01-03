@@ -48,12 +48,22 @@ module.exports = class Storage {
      * @param {string} path
      * @param {number} offset
      * @param {number} count
-     * @param {any} stream
+     * @param {import("stream").Writable} stream
      */
     async downloadTo(path, offset, count, stream) {
         const blob = await this.containerClient
             .getBlobClient(path)
             .download(offset, count);
         return blob.readableStreamBody.pipe(stream);
+    }
+
+    /**
+     * @param {string} path
+     * @param {import("stream").Readable} stream
+     */
+    async uploadTo(path, stream) {
+        return this.containerClient
+            .getBlockBlobClient(path)
+            .uploadStream(stream);
     }
 }
