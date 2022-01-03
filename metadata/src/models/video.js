@@ -17,7 +17,13 @@ const getById = (/** @type {mongodb.Collection} */ collection, /** @type {string
     }
 };
 
+const insert = async (/** @type {mongodb.Collection} */ collection, /** @type {{ name: string, videoPath: string }} */ video) => {
+    const result = await collection.insertOne(video);
+    return result.insertedId;
+};
+
 module.exports = {
     select,
     getById,
+    insert,
 };

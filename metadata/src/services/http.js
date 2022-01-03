@@ -1,10 +1,13 @@
 const express = require('express');
+const bodyParser = require('body-parser')
 
-const { setupHandlers } = require("../api-routes");
+const { setupHandlers } = require("../routes");
 
 module.exports.startHttpServer = async (port, db) => {
     return new Promise(resolve => { // Wrap in a promise so we can be notified when the server has started.
         const app = express();
+        app.use(bodyParser.json())
+
         const microservice = { // Create an object to represent our microservice.
             app,
             db: db.db,
