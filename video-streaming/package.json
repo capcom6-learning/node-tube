@@ -17,7 +17,8 @@
     "axios": "^0.24.0",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
-    "hbs": "^4.2.0"
+    "mime": "^3.0.0",
+    "nanoid": "^3.1.30"
   },
   "devDependencies": {
     "jest": "^27.4.5",

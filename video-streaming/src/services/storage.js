@@ -17,7 +17,7 @@ module.exports = class StorageService {
      * @param {any} headers
      * @param {(res: http.IncomingMessage) => void} callback
      */
-    makeRequest(path, headers, callback) {
+    makeGetRequest(path, headers, callback) {
         return http.request({
             host: this.host,
             port: this.port,
@@ -25,5 +25,28 @@ module.exports = class StorageService {
             method: 'GET',
             headers: headers
         }, callback);
+    }
+
+    /**
+     * @param {string} path
+     * @param {import('stream').Readable} stream
+     */
+    uploadVideo(path, stream) {
+        return new Promise((resolve, reject) => {
+            const request = http.request({
+                host: this.host,
+                port: this.port,
+                path: `/video?path=${path}`,
+                method: 'PUT',
+            }, (res) => {
+                if (res.statusCode < 300) {
+                    resolve();
+                } else {
+                    reject();
+                }
+            });
+
+            stream.pipe(request);
+        });
     }
 }

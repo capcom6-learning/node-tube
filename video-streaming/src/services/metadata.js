@@ -17,4 +17,12 @@ module.exports = class MetadataService {
         const response = await axios.get(`${this.baseUrl}/video`, { params: { id } });
         return response.data;
     }
+
+    /**
+     * @param {{ name: string, videoPath: string }} video
+     */
+    async putVideo(video) {
+        const response = await axios.put(`${this.baseUrl}/video`, video);
+        return response.data;
+    }
 }
