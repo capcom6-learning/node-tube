@@ -54,13 +54,14 @@ module.exports = class VideoHandler {
 
                 const forwardRequest = this.storage.makeGetRequest(
                     videoRecord.videoPath, 
-                    req.header, 
+                    req.headers, 
                     forwardResponse => {
                         res.writeHead(forwardResponse.statusCode, forwardResponse.headers);
                         forwardResponse.pipe(res);
                     });
             
                 req.pipe(forwardRequest);
+                forwardRequest.end();
             })
             .catch(err => {
                 logger.logError(err, `Failed to get video by id ${req.query.id}`);
