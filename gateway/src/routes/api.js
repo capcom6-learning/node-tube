@@ -14,6 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+const logger = require('../services/log');
+
 module.exports = class ApiHandler {
     /**
      * @param {{ app: import("express").Express; metadata: import("../services/metadata"); streaming: import("../services/streaming"); }} service
@@ -43,6 +45,10 @@ module.exports = class ApiHandler {
             .then(response => {
                 res.writeHead(response.status, response.headers);
                 response.data.pipe(res);
+            })
+            .catch(err => {
+                logger.logError(err, `Can not get video with id ${id}`);
+                res.sendStatus(500);
             });
     }
 }

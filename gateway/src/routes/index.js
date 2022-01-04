@@ -67,10 +67,16 @@ class Handler {
             return;
         }
 
-        const metadata = await this.metadata.getVideo(id.toString());
-        const url = `/api/video?id=${metadata._id}`;
+        try {
+            const metadata = await this.metadata.getVideo(id.toString());
+            const url = `/api/video?id=${metadata._id}`;
 
-        res.render("play-video", { video: { metadata, url } });
+            res.render("play-video", { video: { metadata, url } });
+        } catch (err) {
+            logger.logError(err, `Failed to play video ${id}`);
+            res.sendStatus(500);
+        }
+        
     }
 }
 
