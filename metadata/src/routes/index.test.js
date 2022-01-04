@@ -6,11 +6,13 @@ describe('API routes', () => {
         return mockLogger;
     });
 
-    const mockGetFn = jest.fn();
     const mockListenFn = jest.fn((port, callback) => callback());
+    const mockGetFn = jest.fn();
+    const mockPutFn = jest.fn();
     const mockApp = {
         listen: mockListenFn,
         get: mockGetFn,
+        put: mockPutFn,
     };
 
     const mockDb = {
@@ -30,6 +32,9 @@ describe('API routes', () => {
         expect(mockGetFn.mock.calls.length).toEqual(2); // two routes
         expect(mockGetFn.mock.calls.some((call) => { return call[0] === '/'; })).toBeTruthy();  // one is root
         expect(mockGetFn.mock.calls.some((call) => { return call[0] === '/video'; })).toBeTruthy(); // another is /video
+
+        expect(mockPutFn.mock.calls.length).toEqual(1); // two routes
+        expect(mockPutFn.mock.calls[0][0]).toEqual('/video');
     });
 
     

@@ -105,12 +105,16 @@ describe('metadata microservice units', () => {
 
     const mockListenFn = jest.fn((port, callback) => callback());
     const mockGetFn = jest.fn();
+    const mockPutFn = jest.fn();
+    const mockUseFn = jest.fn();
 
     jest.doMock("express", () => { // Mock the Express module.
         return () => { // The Express module is a factory function that creates an Express app object.
             return { // Mock Express app object.
                 listen: mockListenFn,
                 get: mockGetFn,
+                put: mockPutFn,
+                use: mockUseFn,
             };
         };
     });
@@ -175,7 +179,7 @@ describe('metadata microservice units', () => {
         await startMicroservice(mockConfig);
 
         const mockRequest = {
-            params: {}
+            query: {}
         };
         const mockJsonFn = jest.fn();
         const mockResponse = {
@@ -208,7 +212,7 @@ describe('metadata microservice units', () => {
         await startMicroservice(mockConfig);
 
         const mockRequest = {
-            params: {
+            query: {
                 id: '61a704c1aa87dfcd0e392a42'
             }
         };
