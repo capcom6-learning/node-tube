@@ -3,6 +3,8 @@
 const logger = require('../services/log');
 const path = require('path');
 const express = require('express');
+const ApiHandler = require('./api');
+const { runInThisContext } = require('vm');
 
 class Handler {
     /**
@@ -15,10 +17,12 @@ class Handler {
         this.index = this.index.bind(this);
         this.upload = this.upload.bind(this);
         this.history = this.history.bind(this);
+        this.video = this.video.bind(this);
 
         this.app.get('/', this.index);
         this.app.get('/upload', this.upload);
         this.app.get('/history', this.history);
+        this.app.get('/video', this.video);
     }
 
     /**
@@ -51,10 +55,27 @@ class Handler {
     history(req, res) {
         res.render("history", { videos: [] });
     }
+
+    /**
+     * @param {import("express").Request} req
+     * @param {import("express").Response} res
+     */
+    async video(req, res) {
+        const id = req.query.id || '';
+        if (!id) {
+            res.redirect('/');
+            return;
+        }
+
+        const metadata = await this.metadata.getVideo(id.toString());
+        const url = `/api/video?id=${metadata._id}`;
+
+        res.render("play-video", { video: { metadata, url } });
+    }
 }
 
 /**
- * @param {{ app: import("express").Express; metadata: import("../services/metadata"); }} microservice
+ * @param {{ app: import("express").Express; metadata: import("../services/metadata"); streaming: import("../services/streaming"); }} microservice
  */
 module.exports.setupHandlers = (microservice) => {
     const app = microservice.app;
@@ -66,13 +87,5 @@ module.exports.setupHandlers = (microservice) => {
     app.use(express.static('public'));
     
     new Handler(microservice);
-
-    app.get('/video', (/** @type {import("express").Request} */ req, /** @type {import("express").Response} */ res) => {
-        if (!('id' in req.query) || !req.query.id) {
-            res.sendStatus(400);
-            return;
-        }
-
-        res.sendStatus(200);
-    });
+    new ApiHandler(microservice);
 };
