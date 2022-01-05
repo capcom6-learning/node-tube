@@ -133,7 +133,7 @@ services:
     build:
       context: ./gateway
       dockerfile: Dockerfile
-      target: prod
+      target: dev
     container_name: node-gateway
     ports:
       - "4006:80"
@@ -145,4 +145,26 @@ services:
     volumes:
       - /tmp/gateway/npm-cache:/root/.npm:z
       - "./gateway/src:/usr/src/app/src:z"
+    restart: 'no'
+
+  video-upload:
+    image: node-video-upload
+    build:
+      context: ./video-upload
+      dockerfile: Dockerfile
+      target: dev
+    container_name: node-video-upload
+    ports:
+      - "4007:80"
+    environment:
+      - PORT=80
+      - VIDEO_STORAGE_HOST=video-storage
+      - VIDEO_STORAGE_PORT=80
+      - RABBIT=amqp://guest:guest@rabbit:5672
+      - METADATA_HOST=metadata
+      - METADATA_PORT=80
+      - "NODE_ENV=development"
+    volumes:
+      - /tmp/video-upload/npm-cache:/root/.npm:z
+      - "./video-upload/src:/usr/src/app/src:z"
     restart: 'no'

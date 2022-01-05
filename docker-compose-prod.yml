@@ -122,5 +122,23 @@ services:
       - PORT=80
       - METADATA_HOST=metadata
       - METADATA_PORT=80
+      - VIDEO_STREAMING_URL=http://video-streaming
     restart: 'no'
 
+  video-upload:
+    image: node-video-upload
+    build:
+      context: ./video-upload
+      dockerfile: Dockerfile
+      target: prod
+    container_name: node-video-upload
+    ports:
+      - "4007:80"
+    environment:
+      - PORT=80
+      - VIDEO_STORAGE_HOST=video-storage
+      - VIDEO_STORAGE_PORT=80
+      - RABBIT=amqp://guest:guest@rabbit:5672
+      - METADATA_HOST=metadata
+      - METADATA_PORT=80
+    restart: 'no'

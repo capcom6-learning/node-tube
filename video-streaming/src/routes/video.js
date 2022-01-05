@@ -15,9 +15,6 @@
 // limitations under the License.
 
 const logger = require('../services/log');
-const path = require('path');
-const mime = require('mime/lite');
-const nanoid = require('nanoid');
 
 module.exports = class VideoHandler {
     /**
@@ -30,10 +27,8 @@ module.exports = class VideoHandler {
         this.channel = channel;
 
         this.getVideo = this.getVideo.bind(this);
-        this.putVideo = this.putVideo.bind(this);
 
         app.get('/video', this.getVideo);
-        app.put('/video', this.putVideo);
     }
 
     /**
@@ -67,45 +62,5 @@ module.exports = class VideoHandler {
                 logger.logError(err, `Failed to get video by id ${req.query.id}`);
                 res.sendStatus(500);
             });
-    }
-
-    /**
-     * @param {import('express').Request} req
-     * @param {import('express').Response} res
-     */
-    putVideo(req, res) {
-        if (!('filename' in req.query)) {
-            res.sendStatus(400);
-            return;
-        }
-
-        const sourceFilename = req.query.filename.toString();
-        const name = (req.query.name || sourceFilename).toString();
-
-        if (!sourceFilename) {
-            res.sendStatus(400);
-            return;
-        }
-
-        const extension = path.extname(sourceFilename);
-        const mimeType = mime.getType(sourceFilename);
-        if (!mimeType.startsWith('video')) {
-            res.sendStatus(400);
-            return;
-        }
-
-        const videoPath = nanoid.nanoid() + extension;
-
-        this.storage.uploadVideo(videoPath, req)
-            .then(() => {
-                return this.metadata.putVideo({ name, videoPath });
-            })
-            .then(_ => res.sendStatus(201))
-            .catch(err => {
-                logger.logError(err, `Failed to upload video to ${videoPath}`);
-                res.sendStatus(500);
-            });
-
-        
     }
 }

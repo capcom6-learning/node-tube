@@ -26,4 +26,27 @@ module.exports = class StorageService {
             headers: headers
         }, callback);
     }
+
+    /**
+     * @param {string} path
+     * @param {import('stream').Readable} stream
+     */
+    uploadVideo(path, stream) {
+        return new Promise((resolve, reject) => {
+            const request = http.request({
+                host: this.host,
+                port: this.port,
+                path: `/video?path=${path}`,
+                method: 'PUT',
+            }, (res) => {
+                if (res.statusCode < 300) {
+                    resolve();
+                } else {
+                    reject();
+                }
+            });
+
+            stream.pipe(request);
+        });
+    }
 }
