@@ -123,6 +123,8 @@ services:
       - METADATA_HOST=metadata
       - METADATA_PORT=80
       - VIDEO_STREAMING_URL=http://video-streaming
+      - VIDEO_UPLOADING_URL=http://video-upload
+      - HISTORY_URL=http://history
     restart: 'no'
 
   video-upload:

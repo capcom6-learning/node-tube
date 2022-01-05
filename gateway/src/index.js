@@ -8,8 +8,9 @@ const routes = require('./routes');
  * @param {import("./services/metadata")} metadata
  * @param {import("./services/streaming")} streaming
  * @param {import("./services/upload")} uploading
+ * @param {import("./services/history")} history
  */
-function startHttpServer(port, metadata, streaming, uploading) {
+function startHttpServer(port, metadata, streaming, uploading, history) {
     return new Promise(resolve => {
         const app = express();
         const microservice = {
@@ -17,6 +18,7 @@ function startHttpServer(port, metadata, streaming, uploading) {
             metadata,
             streaming,
             uploading,
+            history,
         };
         routes.setupHandlers(microservice);
 
@@ -38,12 +40,14 @@ async function startMicroservice(config) {
     const MetadataService = require('./services/metadata');
     const VideoStreamingService = require('./services/streaming');
     const VideoUploadService = require('./services/upload');
+    const HistoryService = require('./services/history');
 
     return startHttpServer(
         config.port,
         new MetadataService(config.metadataHost, config.metadataPort),
         new VideoStreamingService(config.videoStreamingUrl),
-        new VideoUploadService(config.videoUploadUrl)
+        new VideoUploadService(config.videoUploadUrl),
+        new HistoryService(config.historyUrl)
     );
 }
 

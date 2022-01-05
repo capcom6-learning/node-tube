@@ -42,7 +42,10 @@ class HttpHandler {
      */
     viewedGet(req, res) {
         videoModel.select(this.dbCollection)
-            .then(data => res.json(data))
+            .then(data => {
+                console.log(data);
+                res.json(data);
+            })
             .catch(err => {
                 logger.logError(err, `Can not get viewed data.`);
                 res.sendStatus(500)
@@ -60,7 +63,7 @@ module.exports.setupHandlers = (
 
     const consumeMessage = async (/** @type {import("amqplib").Message} */ msg) => {
         const parsedMsg = JSON.parse(msg.content.toString());
-        await videoModel.insert(videosCollection, parsedMsg.videoPath);
+        await videoModel.insert(videosCollection, parsedMsg.videoId);
         channel.ack(msg);
     };
 

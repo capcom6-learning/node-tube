@@ -8,20 +8,21 @@ const { runInThisContext } = require('vm');
 
 class Handler {
     /**
-     * @param {{ app: import("express").Express; metadata: import("../services/metadata"); }} service
+     * @param {{ app: import("express").Express; metadata: import("../services/metadata"); history: import("../services/history"); }} service
      */
     constructor(service) {
         this.app = service.app;
         this.metadata = service.metadata;
+        this.history = service.history;
 
         this.index = this.index.bind(this);
         this.upload = this.upload.bind(this);
-        this.history = this.history.bind(this);
+        this.getHistory = this.getHistory.bind(this);
         this.video = this.video.bind(this);
 
         this.app.get('/', this.index);
         this.app.get('/upload', this.upload);
-        this.app.get('/history', this.history);
+        this.app.get('/history', this.getHistory);
         this.app.get('/video', this.video);
     }
 
@@ -52,8 +53,15 @@ class Handler {
      * @param {import("express").Request} req
      * @param {import("express").Response} res
      */
-    history(req, res) {
-        res.render("history", { videos: [] });
+    getHistory(req, res) {
+        this.history.selectHistory()
+            .then(history => {
+                res.render("history", { videos: history });
+            })
+            .catch((err) => {
+                logger.logError(err, `Failed to get history`);
+                res.sendStatus(500);
+            });
     }
 
     /**
@@ -81,7 +89,7 @@ class Handler {
 }
 
 /**
- * @param {{ app: import("express").Express; metadata: import("../services/metadata"); streaming: import("../services/streaming"); uploading: import("../services/upload") }} microservice
+ * @param {{ app: import("express").Express; metadata: import("../services/metadata"); streaming: import("../services/streaming"); uploading: import("../services/upload"); history: import("../services/history");}} microservice
  */
 module.exports.setupHandlers = (microservice) => {
     const app = microservice.app;

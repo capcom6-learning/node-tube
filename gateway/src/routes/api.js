@@ -18,7 +18,7 @@ const logger = require('../services/log');
 
 module.exports = class ApiHandler {
     /**
-     * @param {{ app: import("express").Express; metadata: import("../services/metadata"); streaming: import("../services/streaming"); uploading: import("../services/upload") }} service
+     * @param {{ app: import("express").Express; metadata: import("../services/metadata"); streaming: import("../services/streaming"); uploading: import("../services/upload"); }} service
      */
     constructor(service) {
         const app = service.app;

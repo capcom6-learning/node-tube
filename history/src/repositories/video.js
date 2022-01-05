@@ -1,8 +1,8 @@
 //@ts-check
 
-const insert = (/** @type {import("mongodb").Collection} */ collection, /** @type {string} */ videoPath) => {
+const insert = (/** @type {import("mongodb").Collection} */ collection, /** @type {string} */ videoId) => {
     return collection.insertOne({
-        videoPath,
+        videoId,
         watched: new Date()
     });
 };

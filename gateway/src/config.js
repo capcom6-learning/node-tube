@@ -17,6 +17,9 @@ if (!process.env.VIDEO_STREAMING_URL) {
 if (!process.env.VIDEO_UPLOADING_URL) {
     throw new Error('Please specify video upload service address with the enviroment variable VIDEO_UPLOADING_URL.');
 }
+if (!process.env.HISTORY_URL) {
+    throw new Error('Please specify history service address with the enviroment variable HISTORY_URL.');
+}
 
 const PORT = parseInt(process.env.PORT || '80');
 const METADATA_HOST = process.env.METADATA_HOST;
@@ -29,4 +32,5 @@ module.exports = {
     metadataPort: METADATA_PORT,
     videoStreamingUrl: VIDEO_STREAMING_URL,
     videoUploadUrl: process.env.VIDEO_UPLOADING_URL,
+    historyUrl: process.env.HISTORY_URL,
 };

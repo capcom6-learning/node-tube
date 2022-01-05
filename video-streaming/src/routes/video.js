@@ -43,8 +43,9 @@ module.exports = class VideoHandler {
 
         this.metadata.getVideo(String(req.query.id))
             .then(videoRecord => {
-                if (!req.header('Range')) {
-                    this.history.sendViewedMessage(this.channel, videoRecord.videoPath);
+                // console.log(req.headers['range']);
+                if (!req.header('Range') || req.headers['range'].startsWith('bytes=0-')) {
+                    this.history.sendViewedMessage(this.channel, videoRecord._id);
                 }
 
                 const forwardRequest = this.storage.makeGetRequest(
