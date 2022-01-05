@@ -52,7 +52,7 @@ module.exports = class VideoHandler {
         }
 
         const extension = path.extname(sourceFilename);
-        const mimeType = mime.getType(sourceFilename);
+        const mimeType = req.headers['content-type'] || mime.getType(sourceFilename);
         if (!mimeType.startsWith('video')) {
             res.sendStatus(400);
             return;

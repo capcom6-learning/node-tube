@@ -18,16 +18,19 @@ const logger = require('../services/log');
 
 module.exports = class ApiHandler {
     /**
-     * @param {{ app: import("express").Express; metadata: import("../services/metadata"); streaming: import("../services/streaming"); }} service
+     * @param {{ app: import("express").Express; metadata: import("../services/metadata"); streaming: import("../services/streaming"); uploading: import("../services/upload") }} service
      */
     constructor(service) {
         const app = service.app;
 
         this.getVideo = this.getVideo.bind(this);
+        this.uploadVideo = this.uploadVideo.bind(this);
 
         app.get('/api/video', this.getVideo);
+        app.post('/api/upload', this.uploadVideo);
 
         this.streaming = service.streaming;
+        this.uploading = service.uploading;
     }
 
     /**
@@ -48,6 +51,27 @@ module.exports = class ApiHandler {
             })
             .catch(err => {
                 logger.logError(err, `Can not get video with id ${id}`);
+                res.sendStatus(500);
+            });
+    }
+
+    /**
+     * @param {import('express').Request} req
+     * @param {import('express').Response} res
+     */
+    uploadVideo(req, res) {
+        const fileName = req.header('file-name');
+        if (!fileName) {
+            res.sendStatus(400);
+            return;
+        }
+
+        this.uploading.uploadVideo(fileName.toString(), req.header('content-type').toString(), req)
+            .then(response => {
+                res.sendStatus(201);
+            })
+            .catch(err => {
+                logger.logError(err, `Can not upload video with name ${fileName}`);
                 res.sendStatus(500);
             });
     }

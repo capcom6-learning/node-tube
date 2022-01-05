@@ -81,7 +81,7 @@ class Handler {
 }
 
 /**
- * @param {{ app: import("express").Express; metadata: import("../services/metadata"); streaming: import("../services/streaming"); }} microservice
+ * @param {{ app: import("express").Express; metadata: import("../services/metadata"); streaming: import("../services/streaming"); uploading: import("../services/upload") }} microservice
  */
 module.exports.setupHandlers = (microservice) => {
     const app = microservice.app;
