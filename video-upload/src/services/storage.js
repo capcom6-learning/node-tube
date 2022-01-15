@@ -38,6 +38,7 @@ module.exports = class StorageService {
                 port: this.port,
                 path: `/video?path=${path}`,
                 method: 'PUT',
+                timeout: 5000,
             }, (res) => {
                 if (res.statusCode < 300) {
                     resolve();

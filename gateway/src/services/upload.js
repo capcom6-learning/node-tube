@@ -37,24 +37,8 @@ module.exports = class VideoUploading {
                 params: { filename }, 
                 headers: { 'Content-Type': contentType },
                 maxBodyLength: Infinity,
+                timeout: 5000,
             }
         );
-
-        // return new Promise((resolve, reject) => {
-        //     const request = http.request({
-        //         host: this.host,
-        //         port: this.port,
-        //         path: `/video?path=${path}`,
-        //         method: 'PUT',
-        //     }, (res) => {
-        //         if (res.statusCode < 300) {
-        //             resolve();
-        //         } else {
-        //             reject();
-        //         }
-        //     });
-
-        //     stream.pipe(request);
-        // });
     }
 }
