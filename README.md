@@ -9,7 +9,7 @@ Based on Node.js + Express.
 Project consists of 6 microservices, database and message broker:
 
 1. Video streaming service. Gets video id from query param, retrives video info from *metadata* service and pass video stream from *video storage* service to client.
-2. Video storage service. Uses Azure Blob storage for videos storage and returns stream by path for *video streaming* service.
+2. [Video storage service](./video-storage-azure/README.md). Uses Azure Blob storage for videos storage and returns stream by path for *video streaming* service.
 3. History service. Receives "viewed" events from *video streaming* service by *RabbitMQ* and puts it into *database*.
 4. MongoDB for storing data.
 5. RabbitMQ for indirect communications.
