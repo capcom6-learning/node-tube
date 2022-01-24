@@ -19,7 +19,7 @@
     "express": "^4.17.2",
     "mime": "^3.0.0",
     "mongodb": "^4.2.2",
-    "nanoid": "^3.1.30"
+    "nanoid": "^3.1.31"
   },
   "devDependencies": {
     "nodemon": "^2.0.15"
