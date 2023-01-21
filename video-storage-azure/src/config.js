@@ -9,7 +9,7 @@ if (!process.env.STORAGE_ACCESS_KEY) {
     throw new Error('Please specify the Azure storage access key with the enviroment variable STORAGE_ACCESS_KEY.');
 }
 
-const PORT = parseInt(process.env.PORT) || 80;
+const PORT = parseInt(process.env.PORT || '80');
 const STORAGE_ACCOUNT_NAME = process.env.STORAGE_ACCOUNT_NAME;
 const STORAGE_ACCESS_KEY = process.env.STORAGE_ACCESS_KEY;
 
