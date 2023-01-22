@@ -28,7 +28,7 @@ services:
   video-storage:
     image: node-video-storage
     build:
-      context: ./video-storage-azure
+      context: ./video-storage-s3
       dockerfile: Dockerfile
       target: dev
     container_name: node-video-storage
@@ -38,8 +38,8 @@ services:
       - PORT=80
       - "NODE_ENV=development"
     volumes:
-      - /tmp/video-storage-azure/npm-cache:/root/.npm:z
-      - "./video-storage-azure/src:/usr/src/app/src:z"
+      - /tmp/video-storage-s3/npm-cache:/root/.npm:z
+      - "./video-storage-s3/src:/usr/src/app/src:z"
     restart: 'no'
 
   db:
@@ -71,7 +71,7 @@ services:
     depends_on:
       - db
       - rabbit
-    
+
   rabbit:
     image: rabbitmq:3.8-management
     container_name: node-rabbit

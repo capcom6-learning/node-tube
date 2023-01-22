@@ -24,12 +24,14 @@ services:
   video-storage:
     image: node-video-storage
     build:
-      context: ./video-storage-azure
+      context: ./video-storage-s3
       dockerfile: Dockerfile
       target: prod
     container_name: node-video-storage
     ports:
       - "4001:80"
+    env_file:
+      - ./video-storage-s3/.env
     environment:
       - PORT=80
     restart: 'no'
@@ -59,7 +61,7 @@ services:
     depends_on:
       - db
       - rabbit
-    
+
   rabbit:
     image: rabbitmq:3.8-management
     container_name: node-rabbit
