@@ -19,7 +19,7 @@
     "mongodb": "^4.2.2"
   },
   "devDependencies": {
-    "axios": "^0.24.0",
+    "axios": "^1.6.0",
     "jest": "^27.4.5",
     "nodemon": "^2.0.15"
   }
